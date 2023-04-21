@@ -1,0 +1,347 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int     @id @default(autoincrement())
+  roleId     Int
+  hash       String
+  firstName  String?
+  lastName   String?
+  email      String  @unique
+  telephone  String?
+  avatar     String?
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  role             UserRole          @relation("user_role_fk", fields: [roleId], references: [id])
+  userAddress      UserAddress[]     @relation("user_address_fk")
+  userPayment      UserPayment[]     @relation("user_payment_fk")
+  shoppingSession  ShoppingSession?  @relation("shopping_session_fk")
+  orderDetail      OrderDetail?      @relation("order_detail_fk")
+  products         Product[]         @relation("users_product_fk")
+  post             Post[]            @relation("user_post_fk")
+  postLikes        PostLike[]        @relation("user_likepost")
+  postComments     PostComment[]     @relation("user_commentpost")
+  postCommentLikes PostCommentLike[] @relation("user_like_comment")
+
+  @@map("user")
+}
+
+model UserRole {
+  id   Int    @id
+  role String
+
+  user User[] @relation("user_role_fk")
+
+  @@map("user_role")
+}
+
+model UserAddress {
+  id         Int    @id @default(autoincrement())
+  userId     Int    
+  address    String
+  city       String
+  postalCode String
+  country    String
+  telephone  String
+
+  user User @relation("user_address_fk", fields: [userId], references: [id])
+
+  @@map("user_address")
+}
+
+model UserPayment {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  payment_type String
+  provider     String
+  expiry       DateTime
+
+  user User @relation("user_payment_fk", fields: [userId], references: [id])
+
+  @@map("user_payment")
+}
+
+model ShoppingSession {
+  id     Int     @id @default(autoincrement())
+  userId Int     @unique
+  total  Decimal @db.Money
+
+  user     User       @relation("shopping_session_fk", fields: [userId], references: [id])
+  cartItem CartItem[] @relation("cart_item_fk")
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  @@map("shopping_session")
+}
+
+model CartItem {
+  id        Int @id @default(autoincrement())
+  sessionId Int @unique
+  productId Int @unique
+  quantity  Int
+
+  shoppingSession ShoppingSession @relation("cart_item_fk", fields: [sessionId], references: [id])
+  product         Product?        @relation("product_fk", fields: [productId], references: [id])
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  @@map("cart_item")
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  sellerId    Int
+  name        String
+  desc        String
+  price       Decimal @db.Money
+  moneyTypeId Int
+  sold        Int?
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+  deletedAt  DateTime @updatedAt
+
+  user       User              @relation("users_product_fk", fields: [sellerId], references: [id])
+  moneyType  MoneyType         @relation("product_money_type", fields: [moneyTypeId], references: [moneyTypeId])
+  cartItem   CartItem?         @relation("product_fk")
+  categories ProductCategory[] @relation("product_category_fk")
+  inventory  ProductInventory? @relation("product_inventory_fk")
+  discount   ProductDiscount[] @relation("product_discount_fk")
+  orderItem  OrderItem?        @relation("order_item_fk")
+  images     ProductImage[]    @relation("products_image")
+
+  @@map("product")
+}
+
+model ProductImage {
+  id        String @id
+  productId Int
+  url       String
+
+  product Product @relation("products_image", fields: [productId], references: [id])
+
+  @@map("product_image")
+}
+
+model ProductCategory {
+  categoryId Int
+  productId  Int
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  product  Product    @relation("product_category_fk", fields: [productId], references: [id])
+  category Categories @relation("category_product_fk", fields: [categoryId], references: [id])
+
+  @@id([categoryId, productId])
+  @@map("product_category")
+}
+
+model Categories {
+  id   Int     @id @default(autoincrement())
+  name String
+  desc String?
+
+  productCategory ProductCategory[] @relation("category_product_fk")
+
+  @@map("categories")
+}
+
+model MoneyType {
+  moneyTypeId Int    @id
+  type        String
+
+  product Product[] @relation("product_money_type")
+
+  @@map("money_type")
+}
+
+model ProductInventory {
+  productId Int @id
+  quantity  Int
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+  deletedAt  DateTime @updatedAt
+
+  product Product @relation("product_inventory_fk", fields: [productId], references: [id])
+
+  @@map("product_inventory")
+}
+
+model ProductDiscount {
+  id               Int     @id @default(autoincrement())
+  productId        Int
+  name             String?
+  desc             String?
+  discount_percent Decimal
+
+  startDate DateTime
+  endDate   DateTime
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  product Product @relation("product_discount_fk", fields: [productId], references: [id])
+
+  @@map("product_discount")
+}
+
+model OrderItem {
+  id        Int @id @default(autoincrement())
+  order_id  Int @unique
+  productId Int @unique
+  quantity  Int
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  order_detail Int
+
+  product     Product?      @relation("order_item_fk", fields: [productId], references: [id])
+  orderDetail OrderDetail[] @relation("order_detail_fk")
+
+  @@map("order_item")
+}
+
+model OrderDetail {
+  id        Int     @id @default(autoincrement())
+  userId    Int     @unique
+  total     Decimal @db.Money
+  paymentId Int     @unique
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  orderItem     OrderItem       @relation("order_detail_fk", fields: [id], references: [order_id])
+  paymentDetail PaymentDetail[] @relation("payment_detail_fk")
+  user          User            @relation("order_detail_fk", fields: [userId], references: [id])
+
+  @@map("order_detail")
+}
+
+model PaymentDetail {
+  id       Int    @id @default(autoincrement())
+  orderId  Int
+  amount   Int
+  provider String
+  status   String
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  orderDetail OrderDetail @relation("payment_detail_fk", fields: [id], references: [paymentId])
+
+  @@map("payment_detail")
+}
+
+model Post {
+  id       Int     @id @default(autoincrement())
+  caption  String?
+  authorId Int
+  // productsId Int?
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  user    User          @relation("user_post_fk", fields: [authorId], references: [id])
+  media   PostMedia[]   @relation("media_post")
+  comment PostComment[] @relation("comment_post")
+  shared  PostShare[]   @relation("shared_post")
+  likes   PostLike[]    @relation("like_post")
+
+  @@map("post")
+}
+
+model PostLike {
+  id     Int     @id @default(autoincrement())
+  postId Int
+  userId Int
+  status Boolean
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  post   Post @relation("like_post", fields: [postId], references: [id])
+  author User @relation("user_likepost", fields: [userId], references: [id])
+
+  @@map("post_like")
+}
+
+model PostMedia {
+  mediaKey String @id
+  postId   Int
+  mediaUrl String
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  post Post @relation("media_post", fields: [postId], references: [id])
+
+  @@map("post_media")
+}
+
+model PostComment {
+  id       Int    @id @default(autoincrement())
+  postId   Int
+  authorId Int
+  comment  String
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  post   Post              @relation("comment_post", fields: [postId], references: [id])
+  author User              @relation("user_commentpost", fields: [authorId], references: [id])
+  likes  PostCommentLike[] @relation("comment_user_liked")
+
+  @@map("post_comment")
+}
+
+model PostCommentLike {
+  commentId Int
+  userId    Int
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  user    User         @relation("user_like_comment", fields: [userId], references: [id])
+  comment PostComment? @relation("comment_user_liked", fields: [commentId], references: [id])
+
+  @@id([commentId, userId])
+  @@map("post_comment_likes")
+}
+
+model PostShare {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  userId     String
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  post Post @relation("shared_post", fields: [postId], references: [id])
+
+  @@map("post_shared")
+}
+
+model PostWithProducts {
+  id         Int      @id @default(autoincrement())
+  postId     Int
+  productId  String
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+
+  @@map("post_with_products")
+}
