@@ -11,14 +11,14 @@ datasource db {
 }
 
 model User {
-  id         Int     @id @default(autoincrement())
-  roleId     Int
-  hash       String
-  firstName  String?
-  lastName   String?
-  email      String  @unique
-  telephone  String?
-  avatar     String?
+  id        Int     @id @default(autoincrement())
+  roleId    Int
+  hash      String
+  firstName String?
+  lastName  String?
+  email     String  @unique
+  telephone String?
+  avatar    String?
 
   createdAt  DateTime @default(now())
   modifiedAt DateTime @updatedAt
@@ -26,7 +26,7 @@ model User {
   role             UserRole          @relation("user_role_fk", fields: [roleId], references: [id])
   userAddress      UserAddress[]     @relation("user_address_fk")
   userPayment      UserPayment[]     @relation("user_payment_fk")
-  shoppingSession  ShoppingSession?  @relation("shopping_session_fk")
+  carts            CartItem[]        @relation("cart_item_fk")
   orderDetail      OrderDetail?      @relation("order_detail_fk")
   products         Product[]         @relation("users_product_fk")
   post             Post[]            @relation("user_post_fk")
@@ -48,7 +48,7 @@ model UserRole {
 
 model UserAddress {
   id         Int    @id @default(autoincrement())
-  userId     Int    
+  userId     Int
   address    String
   city       String
   postalCode String
@@ -72,28 +72,14 @@ model UserPayment {
   @@map("user_payment")
 }
 
-model ShoppingSession {
-  id     Int     @id @default(autoincrement())
-  userId Int     @unique
-  total  Decimal @db.Money
-
-  user     User       @relation("shopping_session_fk", fields: [userId], references: [id])
-  cartItem CartItem[] @relation("cart_item_fk")
-
-  createdAt  DateTime @default(now())
-  modifiedAt DateTime @updatedAt
-
-  @@map("shopping_session")
-}
-
 model CartItem {
   id        Int @id @default(autoincrement())
-  sessionId Int @unique
+  userId    Int
   productId Int @unique
   quantity  Int
 
-  shoppingSession ShoppingSession @relation("cart_item_fk", fields: [sessionId], references: [id])
-  product         Product?        @relation("product_fk", fields: [productId], references: [id])
+  product Product? @relation("product_fk", fields: [productId], references: [id])
+  user    User     @relation("cart_item_fk", fields: [userId], references: [id])
 
   createdAt  DateTime @default(now())
   modifiedAt DateTime @updatedAt

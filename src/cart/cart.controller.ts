@@ -3,33 +3,32 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CartService } from './cart.service';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
+import { DeleteCartItemDto } from './dto';
 
 @Controller()
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @MessagePattern('createCart')
-  create(@Payload() createCartDto: CreateCartDto) {
-    return this.cartService.create(createCartDto);
+  @MessagePattern('create_cart_item')
+  create(@Payload() dto: CreateCartDto) {
+    return this.cartService.create(dto);
   }
 
-  @MessagePattern('findAllCart')
-  findAll() {
-    return this.cartService.findAll();
+  @MessagePattern('get_cart')
+  findAll(@Payload() { userId }: { userId: number }) {
+    return this.cartService.findAll(userId);
   }
 
-  @MessagePattern('findOneCart')
+  @MessagePattern('get_cart_item')
   findOne(@Payload() id: number) {
     return this.cartService.findOne(id);
   }
 
-  @MessagePattern('updateCart')
-  update(@Payload() updateCartDto: UpdateCartDto) {
-    return this.cartService.update(updateCartDto.id, updateCartDto);
-  }
+  @MessagePattern('update_cart_item')
+  update(@Payload() updateCartDto: UpdateCartDto) {}
 
-  @MessagePattern('removeCart')
-  remove(@Payload() id: number) {
-    return this.cartService.remove(id);
+  @MessagePattern('delete_cart_item')
+  remove(@Payload() dto: DeleteCartItemDto) {
+    return this.cartService.remove(dto);
   }
 }
