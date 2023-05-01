@@ -31,7 +31,7 @@ export class RedisModule {
       provide: IORedisKey,
       useFactory: async (...args) => {
         const { connectionOptions, onClientReady } = await useFactory(...args);
-        const client = await new IORedis(connectionOptions);
+        const client = new IORedis(connectionOptions);
         onClientReady(client);
         return client;
       },

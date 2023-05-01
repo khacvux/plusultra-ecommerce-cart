@@ -73,17 +73,18 @@ model UserPayment {
 }
 
 model CartItem {
-  id        Int @id @default(autoincrement())
+  id        Int @default(autoincrement())
   userId    Int
-  productId Int @unique
+  productId Int
   quantity  Int
 
-  product Product? @relation("product_fk", fields: [productId], references: [id])
-  user    User     @relation("cart_item_fk", fields: [userId], references: [id])
+  product Product @relation("product_fk", fields: [productId], references: [id])
+  user    User    @relation("cart_item_fk", fields: [userId], references: [id])
 
   createdAt  DateTime @default(now())
   modifiedAt DateTime @updatedAt
 
+  @@id([userId, productId])
   @@map("cart_item")
 }
 
@@ -102,7 +103,7 @@ model Product {
 
   user       User              @relation("users_product_fk", fields: [sellerId], references: [id])
   moneyType  MoneyType         @relation("product_money_type", fields: [moneyTypeId], references: [moneyTypeId])
-  cartItem   CartItem?         @relation("product_fk")
+  cartItem   CartItem[]        @relation("product_fk")
   categories ProductCategory[] @relation("product_category_fk")
   inventory  ProductInventory? @relation("product_inventory_fk")
   discount   ProductDiscount[] @relation("product_discount_fk")

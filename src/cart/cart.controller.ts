@@ -27,8 +27,8 @@ export class CartController {
   @MessagePattern('update_cart_item')
   update(@Payload() updateCartDto: UpdateCartDto) {}
 
-  @MessagePattern('delete_cart_item')
-  remove(@Payload() dto: DeleteCartItemDto) {
-    return this.cartService.remove(dto);
-  }
+  // @MessagePattern('delete_cart_item')
+  // remove(@Payload() dto: DeleteCartItemDto) {
+  //   return this.cartService.remove(dto);
+  // }
 }
